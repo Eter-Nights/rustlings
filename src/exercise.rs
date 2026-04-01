@@ -11,8 +11,8 @@ const RUSTC_COLOR_ARGS: &[&str] = &["--color", "always"];
 const RUSTC_EDITION_ARGS: &[&str] = &["--edition", "2021"];
 const I_AM_DONE_REGEX: &str = r"(?m)^\s*///?\s*I\s+AM\s+NOT\s+DONE";
 const CONTEXT: usize = 2;
-const CLIPPY_CARGO_TOML_PATH: &str = "./exercises/clippy/Cargo.toml";
-const BUILD_SCRIPT_CARGO_TOML_PATH: &str = "./exercises/tests/Cargo.toml";
+const CLIPPY_CARGO_TOML_PATH: &str = "./exercises/22_clippy/Cargo.toml";
+const BUILD_SCRIPT_CARGO_TOML_PATH: &str = "./exercises/17_tests/Cargo.toml";
 
 // Get a temporary file name that is hopefully unique
 #[inline]
@@ -110,7 +110,7 @@ impl Drop for FileHandle {
 }
 
 impl Exercise {
-    pub fn compile(&self) -> Result<CompiledExercise, ExerciseOutput> {
+    pub fn compile(&self) -> Result<CompiledExercise<'_>, ExerciseOutput> {
         let cmd = match self.mode {
             Mode::Compile => Command::new("rustc")
                 .args(&[self.path.to_str().unwrap(), "-o", &temp_file()])
@@ -163,7 +163,7 @@ path = "{}.rs""#,
                     .args(RUSTC_COLOR_ARGS)
                     .args(&["--", "-D", "warnings", "-D", "clippy::float_cmp"])
                     .output()
-            },
+            }
             Mode::BuildScript => {
                 let cargo_toml = format!(
                     r#"[package]
@@ -206,13 +206,15 @@ path = "{}.rs""#,
     fn run(&self) -> Result<ExerciseOutput, ExerciseOutput> {
         let arg = match self.mode {
             Mode::Test => "--show-output",
-            Mode::BuildScript => return Ok(ExerciseOutput {
-                stdout: "".to_string(),
-                stderr: "".to_string(),
-            }),
+            Mode::BuildScript => {
+                return Ok(ExerciseOutput {
+                    stdout: "".to_string(),
+                    stderr: "".to_string(),
+                })
+            }
             _ => "",
         };
-        println!("pa={}", temp_file());
+        println!("path={}", temp_file());
         let cmd = Command::new(&temp_file())
             .arg(arg)
             .output()
